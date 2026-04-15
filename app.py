@@ -170,6 +170,28 @@ with tabs[3]:
                     f"Espiras: {N:.0f}"
                 )
 
+                # -------- SEMAFOROS --------
+                if I > 20:
+                    st.error(f"🔴 Corriente ALTA")
+                elif I > 15:
+                    st.warning(f"🟡 Corriente MEDIA")
+                else:
+                    st.success(f"🟢 Corriente NORMAL")
+
+                if fp < 0.75:
+                    st.error("🔴 FP bajo")
+                elif fp < 0.85:
+                    st.warning("🟡 FP medio")
+                else:
+                    st.success("🟢 FP bueno")
+
+                if eta < 0.80:
+                    st.error("🔴 Bajo rendimiento")
+                elif eta < 0.88:
+                    st.warning("🟡 Rendimiento medio")
+                else:
+                    st.success("🟢 Buen rendimiento")
+
     with col2:
         st.markdown("### 📌 Referencias")
 
@@ -187,19 +209,11 @@ with tabs[3]:
 - 0.75 → Bajo  
 
 **Densidad de corriente**
-- 3 – 5 A/mm² → estándar bobinado  
+- 3 – 5 A/mm²  
 
 **Frecuencia**
 - 50 Hz → Argentina  
 - 60 Hz → Industrial  
-
-**Notas técnicas**
-- Corriente: I = P / (√3 · V · fp · η)  
-- Sección: S = I / 4  
-- Espiras: N = (V / f) × 2  
-
-⚠️ Valores orientativos de taller
-✔ Ajustar según núcleo y diseño real
 """)
 
 # -------- TAB 5 --------
@@ -225,4 +239,4 @@ with tabs[4]:
         elif R == 0:
             ohm_res.markdown(f"<div class='result-box'>{V/I:.2f} Ω</div>", unsafe_allow_html=True)
 
-st.caption("Desarrollado por SED")
+st.caption("Desarrollado por SED con soporte IA")

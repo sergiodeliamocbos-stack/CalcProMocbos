@@ -62,12 +62,12 @@ with tabs[0]:
         st.latex("kW = HP \\times 0.746")
         st.latex("HP = \\frac{kW}{0.746}")
 
-    hp = st.number_input("HP", value=0.0)
-    if st.button("Calcular kW"):
+    hp = st.number_input("HP", value=0.0, key="hp_conv")
+    if st.button("Calcular kW", key="btn_kw"):
         st.success(f"{hp*0.746:.3f} kW")
 
-    kw = st.number_input("kW", value=0.0)
-    if st.button("Calcular HP"):
+    kw = st.number_input("kW", value=0.0, key="kw_conv")
+    if st.button("Calcular HP", key="btn_hp"):
         st.success(f"{kw/0.746:.3f} HP")
 
 # -------- TAB 2 --------
@@ -77,10 +77,10 @@ with tabs[1]:
     if st.checkbox("Ver fórmula", key="chk_pot"):
         st.latex("HP = \\frac{T \\cdot RPM}{716.2}")
 
-    t = st.number_input("Cupla (kgm)", value=0.0)
-    rpm = st.number_input("RPM", value=0.0)
+    t = st.number_input("Cupla (kgm)", value=0.0, key="t_pot")
+    rpm = st.number_input("RPM", value=0.0, key="rpm_pot")
 
-    if st.button("Calcular Potencia"):
+    if st.button("Calcular Potencia", key="btn_pot"):
         if rpm != 0:
             st.success(f"{(t*rpm)/716.2:.3f} HP")
 
@@ -91,21 +91,21 @@ with tabs[2]:
     if st.checkbox("Ver fórmula", key="chk_cupla"):
         st.latex("T = \\frac{HP \\cdot 716.2}{RPM}")
 
-    hp2 = st.number_input("HP", value=0.0)
-    rpm2 = st.number_input("RPM", value=0.0)
+    hp2 = st.number_input("HP", value=0.0, key="hp_cupla")
+    rpm2 = st.number_input("RPM", value=0.0, key="rpm_cupla")
 
-    if st.button("Calcular Cupla"):
+    if st.button("Calcular Cupla", key="btn_cupla"):
         if rpm2 != 0:
             st.success(f"{(hp2*716.2)/rpm2:.3f} kgm")
 
     st.markdown("---")
 
-    kgm = st.number_input("kgm")
-    if st.button("kgm → Nm"):
+    kgm = st.number_input("kgm", key="kgm_conv")
+    if st.button("kgm → Nm", key="btn_kgm_nm"):
         st.success(f"{kgm*9.81:.2f} Nm")
 
-    nm = st.number_input("Nm")
-    if st.button("Nm → kgm"):
+    nm = st.number_input("Nm", key="nm_conv")
+    if st.button("Nm → kgm", key="btn_nm_kgm"):
         st.success(f"{nm/9.81:.2f} kgm")
 
 # -------- TAB 4 --------
@@ -115,17 +115,17 @@ with tabs[3]:
     if st.checkbox("Ver fórmula", key="chk_bob"):
         st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
 
-    P = st.number_input("Potencia (kW)", value=0.0)
-    V = st.number_input("Voltaje (V)", value=0.0)
-    eta = st.number_input("Rendimiento", value=0.9)
-    fp = st.number_input("Factor de potencia", value=0.85)
-    f = st.number_input("Frecuencia (Hz)", value=50.0)
+    P = st.number_input("Potencia (kW)", value=0.0, key="p_bob")
+    V = st.number_input("Voltaje (V)", value=0.0, key="v_bob")
+    eta = st.number_input("Rendimiento", value=0.9, key="eta_bob")
+    fp = st.number_input("Factor de potencia", value=0.85, key="fp_bob")
+    f = st.number_input("Frecuencia (Hz)", value=50.0, key="f_bob")
 
     st.markdown("### 🔧 Datos opcionales reales")
-    S_real = st.number_input("Sección real del alambre (mm²)", value=0.0)
-    N_real = st.number_input("Espiras reales", value=0)
+    S_real = st.number_input("Sección real del alambre (mm²)", value=0.0, key="sreal_bob")
+    N_real = st.number_input("Espiras reales", value=0, key="nreal_bob")
 
-    if st.button("Calcular Bobinado"):
+    if st.button("Calcular Bobinado", key="btn_bob"):
         if V != 0:
             I = (P*1000)/(math.sqrt(3)*V*fp*eta)
             S = I / 4
@@ -137,7 +137,7 @@ with tabs[3]:
                 f"Espiras estimadas: {N:.0f}"
             )
 
-            # -------- SEMAFOROS --------
+            # -------- SEMÁFOROS --------
 
             # FP
             if fp < 0.75:
@@ -155,7 +155,7 @@ with tabs[3]:
             else:
                 st.success("🟢 Buen rendimiento")
 
-            # Sección (inteligente)
+            # Sección
             if S_real > 0:
                 if S_real < S:
                     st.error("🔴 Cable chico (riesgo)")
@@ -166,6 +166,30 @@ with tabs[3]:
             else:
                 st.info("ℹ️ Ingresar sección real para diagnóstico")
 
+    st.markdown("### 📌 Referencias")
+    st.markdown("""
+**Factor de Potencia (FP)**
+- 0.9  → Excelente  
+- 0.85 → Bueno  
+- 0.8  → Normal  
+- 0.7  → Bajo  
+
+**Rendimiento (η)**
+- 0.90 → Excelente  
+- 0.85 → Bueno  
+- 0.80 → Normal  
+- 0.75 → Bajo  
+
+**Densidad de corriente**
+- 3 – 5 A/mm²  
+
+**Frecuencia**
+- 50 Hz → Argentina  
+- 60 Hz → Industrial  
+
+⚠️ Valores orientativos de taller
+""")
+
 # -------- TAB 5 --------
 with tabs[4]:
     st.subheader("Ley de Ohm")
@@ -173,11 +197,11 @@ with tabs[4]:
     if st.checkbox("Ver fórmula", key="chk_ohm"):
         st.latex("V = I \\cdot R")
 
-    V = st.number_input("Voltaje", value=0.0)
-    I = st.number_input("Intensidad", value=0.0)
-    R = st.number_input("Resistencia", value=0.0)
+    V = st.number_input("Voltaje", value=0.0, key="v_ohm")
+    I = st.number_input("Intensidad", value=0.0, key="i_ohm")
+    R = st.number_input("Resistencia", value=0.0, key="r_ohm")
 
-    if st.button("Calcular"):
+    if st.button("Calcular", key="btn_ohm"):
         if V == 0:
             st.success(f"{I*R:.2f} V")
         elif I == 0:

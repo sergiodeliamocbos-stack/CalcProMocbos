@@ -28,7 +28,7 @@ button[data-baseweb="tab"][aria-selected="true"] {
     font-weight: bold;
 }
 
-input[type="number"] {
+input {
     background-color: #ffffff !important;
     color: #000000 !important;
 }
@@ -40,7 +40,6 @@ input[type="number"] {
     border-radius: 5px;
     text-align: center;
     font-size: 18px;
-    margin-top: 5px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -63,25 +62,13 @@ with tabs[0]:
         st.latex("kW = HP \\times 0.746")
         st.latex("HP = \\frac{kW}{0.746}")
 
-    hp = st.number_input("HP", value=0.0, key="hp_conv")
-
-    kw_res = st.empty()
-    st.markdown("kW:")
-    kw_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
-
+    hp = st.number_input("HP", value=0.0)
     if st.button("Calcular kW"):
-        kw = hp * 0.746
-        kw_res.markdown(f"<div class='result-box'>{kw:.3f}</div>", unsafe_allow_html=True)
+        st.success(f"{hp*0.746:.3f} kW")
 
-    kw = st.number_input("kW", value=0.0, key="kw_conv")
-
-    hp_res = st.empty()
-    st.markdown("HP:")
-    hp_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
-
+    kw = st.number_input("kW", value=0.0)
     if st.button("Calcular HP"):
-        hp_val = kw / 0.746
-        hp_res.markdown(f"<div class='result-box'>{hp_val:.3f}</div>", unsafe_allow_html=True)
+        st.success(f"{kw/0.746:.3f} HP")
 
 # -------- TAB 2 --------
 with tabs[1]:
@@ -90,17 +77,12 @@ with tabs[1]:
     if st.checkbox("Ver fórmula", key="chk_pot"):
         st.latex("HP = \\frac{T \\cdot RPM}{716.2}")
 
-    t = st.number_input("Cupla (kgm)", value=0.0, key="t_pot")
-    rpm = st.number_input("RPM", value=0.0, key="rpm_pot")
-
-    pot_res = st.empty()
-    st.markdown("Potencia (HP):")
-    pot_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+    t = st.number_input("Cupla (kgm)", value=0.0)
+    rpm = st.number_input("RPM", value=0.0)
 
     if st.button("Calcular Potencia"):
         if rpm != 0:
-            hp_calc = (t*rpm)/716.2
-            pot_res.markdown(f"<div class='result-box'>{hp_calc:.3f}</div>", unsafe_allow_html=True)
+            st.success(f"{(t*rpm)/716.2:.3f} HP")
 
 # -------- TAB 3 --------
 with tabs[2]:
@@ -109,49 +91,91 @@ with tabs[2]:
     if st.checkbox("Ver fórmula", key="chk_cupla"):
         st.latex("T = \\frac{HP \\cdot 716.2}{RPM}")
 
-    hp2 = st.number_input("HP", value=0.0, key="hp_cupla")
-    rpm2 = st.number_input("RPM", value=0.0, key="rpm_cupla")
-
-    cupla_res = st.empty()
-    st.markdown("Cupla (kgm):")
-    cupla_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+    hp2 = st.number_input("HP", value=0.0)
+    rpm2 = st.number_input("RPM", value=0.0)
 
     if st.button("Calcular Cupla"):
         if rpm2 != 0:
-            t_calc = (hp2*716.2)/rpm2
-            cupla_res.markdown(f"<div class='result-box'>{t_calc:.3f}</div>", unsafe_allow_html=True)
+            st.success(f"{(hp2*716.2)/rpm2:.3f} kgm")
+
+    st.markdown("---")
+
+    kgm = st.number_input("kgm")
+    if st.button("kgm → Nm"):
+        st.success(f"{kgm*9.81:.2f} Nm")
+
+    nm = st.number_input("Nm")
+    if st.button("Nm → kgm"):
+        st.success(f"{nm/9.81:.2f} kgm")
 
 # -------- TAB 4 --------
 with tabs[3]:
     st.subheader("Bobinado")
 
+    if st.checkbox("Ver fórmula", key="chk_bob"):
+        st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
+
     P = st.number_input("Potencia (kW)", value=0.0)
     V = st.number_input("Voltaje (V)", value=0.0)
     eta = st.number_input("Rendimiento", value=0.9)
     fp = st.number_input("Factor de potencia", value=0.85)
+    f = st.number_input("Frecuencia (Hz)", value=50.0)
+
+    st.markdown("### 🔧 Datos opcionales reales")
+    S_real = st.number_input("Sección real del alambre (mm²)", value=0.0)
+    N_real = st.number_input("Espiras reales", value=0)
 
     if st.button("Calcular Bobinado"):
         if V != 0:
             I = (P*1000)/(math.sqrt(3)*V*fp*eta)
+            S = I / 4
+            N = (V / f) * 2
 
-            st.success(f"Corriente: {I:.2f} A")
+            st.success(
+                f"Corriente: {I:.2f} A\n"
+                f"Sección calculada: {S:.2f} mm²\n"
+                f"Espiras estimadas: {N:.0f}"
+            )
 
-            I_nominal = (P*1000)/(math.sqrt(3)*V*0.85*0.9)
+            # -------- SEMAFOROS --------
 
-            if I > I_nominal * 1.2:
-                st.error("🔴 Corriente ALTA")
-            elif I > I_nominal * 1.05:
-                st.warning("🟡 Corriente MEDIA")
+            # FP
+            if fp < 0.75:
+                st.error("🔴 FP bajo")
+            elif fp < 0.85:
+                st.warning("🟡 FP medio")
             else:
-                st.success("🟢 Corriente NORMAL")
+                st.success("🟢 FP bueno")
+
+            # Rendimiento
+            if eta < 0.80:
+                st.error("🔴 Bajo rendimiento")
+            elif eta < 0.88:
+                st.warning("🟡 Rendimiento medio")
+            else:
+                st.success("🟢 Buen rendimiento")
+
+            # Sección (inteligente)
+            if S_real > 0:
+                if S_real < S:
+                    st.error("🔴 Cable chico (riesgo)")
+                elif S_real < S*1.2:
+                    st.warning("🟡 Cable justo")
+                else:
+                    st.success("🟢 Cable correcto")
+            else:
+                st.info("ℹ️ Ingresar sección real para diagnóstico")
 
 # -------- TAB 5 --------
 with tabs[4]:
     st.subheader("Ley de Ohm")
 
-    V = st.number_input("Voltaje", value=0.0, key="v_ohm")
-    I = st.number_input("Intensidad", value=0.0, key="i_ohm")
-    R = st.number_input("Resistencia", value=0.0, key="r_ohm")
+    if st.checkbox("Ver fórmula", key="chk_ohm"):
+        st.latex("V = I \\cdot R")
+
+    V = st.number_input("Voltaje", value=0.0)
+    I = st.number_input("Intensidad", value=0.0)
+    R = st.number_input("Resistencia", value=0.0)
 
     if st.button("Calcular"):
         if V == 0:
@@ -161,4 +185,4 @@ with tabs[4]:
         elif R == 0:
             st.success(f"{V/I:.2f} Ω")
 
-st.caption("Desarrollado por SED")
+st.caption("Desarrollado por SED con soporte IA")

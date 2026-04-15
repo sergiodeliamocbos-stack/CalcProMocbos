@@ -1,6 +1,7 @@
 import streamlit as st
 import math
 import pandas as pd
+import numpy as np
 
 st.set_page_config(page_title="CalcPro Mocbos", layout="centered", page_icon="⚡")
 
@@ -52,7 +53,7 @@ with col2:
 st.markdown("<h2 style='text-align:center;'>CalcPro Mocbos</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;color:gray;'>Planta Mocbos</p>", unsafe_allow_html=True)
 
-tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm"])
+tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm", "Gráfico"])
 
 # -------- TAB 1 --------
 with tabs[0]:
@@ -112,62 +113,64 @@ with tabs[2]:
 with tabs[3]:
     st.subheader("Bobinado")
 
-    if st.checkbox("Ver fórmula", key="chk_bob"):
-        st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
+    col1, col2 = st.columns([2,1])
 
-    P = st.number_input("Potencia (kW)", value=0.0, key="p_bob")
-    V = st.number_input("Voltaje (V)", value=0.0, key="v_bob")
-    eta = st.number_input("Rendimiento", value=0.9, key="eta_bob")
-    fp = st.number_input("Factor de potencia", value=0.85, key="fp_bob")
-    f = st.number_input("Frecuencia (Hz)", value=50.0, key="f_bob")
+    with col1:
+        if st.checkbox("Ver fórmula", key="chk_bob"):
+            st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
 
-    st.markdown("### 🔧 Datos opcionales reales")
-    S_real = st.number_input("Sección real del alambre (mm²)", value=0.0, key="sreal_bob")
-    N_real = st.number_input("Espiras reales", value=0, key="nreal_bob")
+        P = st.number_input("Potencia (kW)", value=0.0, key="p_bob")
+        V = st.number_input("Voltaje (V)", value=0.0, key="v_bob")
+        eta = st.number_input("Rendimiento", value=0.9, key="eta_bob")
+        fp = st.number_input("Factor de potencia", value=0.85, key="fp_bob")
+        f = st.number_input("Frecuencia (Hz)", value=50.0, key="f_bob")
 
-    if st.button("Calcular Bobinado", key="btn_bob"):
-        if V != 0:
-            I = (P*1000)/(math.sqrt(3)*V*fp*eta)
-            S = I / 4
-            N = (V / f) * 2
+        st.markdown("### 🔧 Datos opcionales reales")
+        S_real = st.number_input("Sección real del alambre (mm²)", value=0.0, key="sreal_bob")
+        N_real = st.number_input("Espiras reales", value=0, key="nreal_bob")
 
-            st.success(
-                f"Corriente: {I:.2f} A\n"
-                f"Sección calculada: {S:.2f} mm²\n"
-                f"Espiras estimadas: {N:.0f}"
-            )
+        if st.button("Calcular Bobinado", key="btn_bob"):
+            if V != 0:
+                I = (P*1000)/(math.sqrt(3)*V*fp*eta)
+                S = I / 4
+                N = (V / f) * 2
 
-            # -------- SEMÁFOROS --------
+                st.success(
+                    f"Corriente: {I:.2f} A\n"
+                    f"Sección calculada: {S:.2f} mm²\n"
+                    f"Espiras estimadas: {N:.0f}"
+                )
 
-            # FP
-            if fp < 0.75:
-                st.error("🔴 FP bajo")
-            elif fp < 0.85:
-                st.warning("🟡 FP medio")
-            else:
-                st.success("🟢 FP bueno")
-
-            # Rendimiento
-            if eta < 0.80:
-                st.error("🔴 Bajo rendimiento")
-            elif eta < 0.88:
-                st.warning("🟡 Rendimiento medio")
-            else:
-                st.success("🟢 Buen rendimiento")
-
-            # Sección
-            if S_real > 0:
-                if S_real < S:
-                    st.error("🔴 Cable chico (riesgo)")
-                elif S_real < S*1.2:
-                    st.warning("🟡 Cable justo")
+                # FP
+                if fp < 0.75:
+                    st.error("🔴 FP bajo")
+                elif fp < 0.85:
+                    st.warning("🟡 FP medio")
                 else:
-                    st.success("🟢 Cable correcto")
-            else:
-                st.info("ℹ️ Ingresar sección real para diagnóstico")
+                    st.success("🟢 FP bueno")
 
-    st.markdown("### 📌 Referencias")
-    st.markdown("""
+                # Rendimiento
+                if eta < 0.80:
+                    st.error("🔴 Bajo rendimiento")
+                elif eta < 0.88:
+                    st.warning("🟡 Rendimiento medio")
+                else:
+                    st.success("🟢 Buen rendimiento")
+
+                # Sección
+                if S_real > 0:
+                    if S_real < S:
+                        st.error("🔴 Cable chico (riesgo)")
+                    elif S_real < S*1.2:
+                        st.warning("🟡 Cable justo")
+                    else:
+                        st.success("🟢 Cable correcto")
+                else:
+                    st.info("ℹ️ Ingresar sección real para diagnóstico")
+
+    with col2:
+        st.markdown("### 📌 Referencias")
+        st.markdown("""
 **Factor de Potencia (FP)**
 - 0.9  → Excelente  
 - 0.85 → Bueno  
@@ -186,8 +189,6 @@ with tabs[3]:
 **Frecuencia**
 - 50 Hz → Argentina  
 - 60 Hz → Industrial  
-
-⚠️ Valores orientativos de taller
 """)
 
 # -------- TAB 5 --------
@@ -209,4 +210,16 @@ with tabs[4]:
         elif R == 0:
             st.success(f"{V/I:.2f} Ω")
 
-st.caption("Desarrollado por SED con soporte IA")
+# -------- TAB 6 --------
+with tabs[5]:
+    st.subheader("Gráfico de comportamiento")
+
+    base = st.number_input("Valor base", value=1.0, key="base_graph")
+    factor = st.number_input("Factor exponencial", value=1.05, key="factor_graph")
+
+    x = np.arange(0, 20)
+    y = base * (factor ** x)
+
+    st.line_chart(pd.DataFrame({"Exponencial": y}))
+
+st.caption("Desarrollado por SED")

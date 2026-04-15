@@ -53,7 +53,7 @@ with col2:
 st.markdown("<h2 style='text-align:center;'>CalcPro Mocbos</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;color:gray;'>Planta Mocbos</p>", unsafe_allow_html=True)
 
-tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm", "Gráfico"])
+tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm"])
 
 # -------- TAB 1 --------
 with tabs[0]:
@@ -83,7 +83,21 @@ with tabs[1]:
 
     if st.button("Calcular Potencia", key="btn_pot"):
         if rpm != 0:
-            st.success(f"{(t*rpm)/716.2:.3f} HP")
+            hp_calc = (t*rpm)/716.2
+            st.success(f"{hp_calc:.3f} HP")
+
+            # -------- GRAFICO REAL --------
+            st.markdown("### 📈 Curva Potencia vs RPM")
+
+            rpm_range = np.linspace(0, rpm*1.5 if rpm > 0 else 1000, 50)
+            potencia_curve = (t * rpm_range) / 716.2
+
+            df = pd.DataFrame({
+                "RPM": rpm_range,
+                "Potencia (HP)": potencia_curve
+            }).set_index("RPM")
+
+            st.line_chart(df)
 
 # -------- TAB 3 --------
 with tabs[2]:
@@ -141,7 +155,6 @@ with tabs[3]:
                     f"Espiras estimadas: {N:.0f}"
                 )
 
-                # FP
                 if fp < 0.75:
                     st.error("🔴 FP bajo")
                 elif fp < 0.85:
@@ -149,7 +162,6 @@ with tabs[3]:
                 else:
                     st.success("🟢 FP bueno")
 
-                # Rendimiento
                 if eta < 0.80:
                     st.error("🔴 Bajo rendimiento")
                 elif eta < 0.88:
@@ -157,7 +169,6 @@ with tabs[3]:
                 else:
                     st.success("🟢 Buen rendimiento")
 
-                # Sección
                 if S_real > 0:
                     if S_real < S:
                         st.error("🔴 Cable chico (riesgo)")
@@ -210,16 +221,4 @@ with tabs[4]:
         elif R == 0:
             st.success(f"{V/I:.2f} Ω")
 
-# -------- TAB 6 --------
-with tabs[5]:
-    st.subheader("Gráfico de comportamiento")
-
-    base = st.number_input("Valor base", value=1.0, key="base_graph")
-    factor = st.number_input("Factor exponencial", value=1.05, key="factor_graph")
-
-    x = np.arange(0, 20)
-    y = base * (factor ** x)
-
-    st.line_chart(pd.DataFrame({"Exponencial": y}))
-
-st.caption("Desarrollado por SED")
+st.caption("Desarrollado por SED con soporte IA")

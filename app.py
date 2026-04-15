@@ -102,13 +102,6 @@ with tabs[1]:
             hp_calc = (t*rpm)/716.2
             pot_res.markdown(f"<div class='result-box'>{hp_calc:.3f}</div>", unsafe_allow_html=True)
 
-    if st.button("Ver curva Potencia vs RPM"):
-        if t != 0:
-            rpm_vals = list(range(100, 3001, 100))
-            hp_vals = [(t*r)/716.2 for r in rpm_vals]
-            data = pd.DataFrame({"RPM": rpm_vals, "HP": hp_vals})
-            st.line_chart(data.set_index("RPM"))
-
 # -------- TAB 3 --------
 with tabs[2]:
     st.subheader("Cupla")
@@ -128,115 +121,44 @@ with tabs[2]:
             t_calc = (hp2*716.2)/rpm2
             cupla_res.markdown(f"<div class='result-box'>{t_calc:.3f}</div>", unsafe_allow_html=True)
 
-    st.markdown("---")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        kgm = st.number_input("kgm", value=0.0, key="kgm_conv")
-        if st.button("kgm → Nm"):
-            st.success(f"{kgm * 9.81:.2f} Nm")
-
-    with col2:
-        nm = st.number_input("Nm", value=0.0, key="nm_conv")
-        if st.button("Nm → kgm"):
-            st.success(f"{nm / 9.81:.2f} kgm")
-
 # -------- TAB 4 --------
 with tabs[3]:
     st.subheader("Bobinado")
 
-    col1, col2 = st.columns([2,1])
+    P = st.number_input("Potencia (kW)", value=0.0)
+    V = st.number_input("Voltaje (V)", value=0.0)
+    eta = st.number_input("Rendimiento", value=0.9)
+    fp = st.number_input("Factor de potencia", value=0.85)
 
-    with col1:
-        if st.checkbox("Ver fórmula", key="chk_bob"):
-            st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
+    if st.button("Calcular Bobinado"):
+        if V != 0:
+            I = (P*1000)/(math.sqrt(3)*V*fp*eta)
 
-        P = st.number_input("Potencia (kW)", value=0.0, key="p_bob")
-        V = st.number_input("Voltaje (V)", value=0.0, key="v_bob")
-        eta = st.number_input("Rendimiento", value=0.9, key="eta_bob")
-        fp = st.number_input("Factor de potencia", value=0.85, key="fp_bob")
-        f = st.number_input("Frecuencia (Hz)", value=50.0, key="freq_bob")
+            st.success(f"Corriente: {I:.2f} A")
 
-        if st.button("Calcular Bobinado"):
-            if V != 0:
-                I = (P*1000)/(math.sqrt(3)*V*fp*eta)
-                S = I / 4
-                N = (V / f) * 2
+            I_nominal = (P*1000)/(math.sqrt(3)*V*0.85*0.9)
 
-                st.success(
-                    f"Corriente: {I:.2f} A\n"
-                    f"Sección: {S:.2f} mm²\n"
-                    f"Espiras: {N:.0f}"
-                )
-
-                # -------- SEMAFOROS --------
-                if I > 20:
-                    st.error(f"🔴 Corriente ALTA")
-                elif I > 15:
-                    st.warning(f"🟡 Corriente MEDIA")
-                else:
-                    st.success(f"🟢 Corriente NORMAL")
-
-                if fp < 0.75:
-                    st.error("🔴 FP bajo")
-                elif fp < 0.85:
-                    st.warning("🟡 FP medio")
-                else:
-                    st.success("🟢 FP bueno")
-
-                if eta < 0.80:
-                    st.error("🔴 Bajo rendimiento")
-                elif eta < 0.88:
-                    st.warning("🟡 Rendimiento medio")
-                else:
-                    st.success("🟢 Buen rendimiento")
-
-    with col2:
-        st.markdown("### 📌 Referencias")
-
-        st.markdown("""
-**Factor de Potencia (FP)**
-- 0.9  → Excelente  
-- 0.85 → Bueno  
-- 0.8  → Normal  
-- 0.7  → Bajo  
-
-**Rendimiento (η)**
-- 0.90 → Excelente  
-- 0.85 → Bueno  
-- 0.80 → Normal  
-- 0.75 → Bajo  
-
-**Densidad de corriente**
-- 3 – 5 A/mm²  
-
-**Frecuencia**
-- 50 Hz → Argentina  
-- 60 Hz → Industrial  
-""")
+            if I > I_nominal * 1.2:
+                st.error("🔴 Corriente ALTA")
+            elif I > I_nominal * 1.05:
+                st.warning("🟡 Corriente MEDIA")
+            else:
+                st.success("🟢 Corriente NORMAL")
 
 # -------- TAB 5 --------
 with tabs[4]:
     st.subheader("Ley de Ohm")
 
-    if st.checkbox("Ver fórmula", key="chk_ohm"):
-        st.latex("V = I \\cdot R")
-
     V = st.number_input("Voltaje", value=0.0, key="v_ohm")
     I = st.number_input("Intensidad", value=0.0, key="i_ohm")
     R = st.number_input("Resistencia", value=0.0, key="r_ohm")
 
-    ohm_res = st.empty()
-    st.markdown("Resultado:")
-    ohm_res.markdown("<div class='result-box'>---</div>", unsafe_allow_html=True)
-
     if st.button("Calcular"):
         if V == 0:
-            ohm_res.markdown(f"<div class='result-box'>{I*R:.2f} V</div>", unsafe_allow_html=True)
+            st.success(f"{I*R:.2f} V")
         elif I == 0:
-            ohm_res.markdown(f"<div class='result-box'>{V/R:.2f} A</div>", unsafe_allow_html=True)
+            st.success(f"{V/R:.2f} A")
         elif R == 0:
-            ohm_res.markdown(f"<div class='result-box'>{V/I:.2f} Ω</div>", unsafe_allow_html=True)
+            st.success(f"{V/I:.2f} Ω")
 
 st.caption("Desarrollado por SED")

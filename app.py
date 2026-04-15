@@ -55,6 +55,93 @@ st.markdown("<p style='text-align:center;color:gray;'>Planta Mocbos</p>", unsafe
 
 tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm"])
 
+# -------- TAB 1 --------
+with tabs[0]:
+    st.subheader("Conversión HP / kW")
+
+    if st.checkbox("Ver fórmula", key="chk_conv"):
+        st.latex("kW = HP \\times 0.746")
+        st.latex("HP = \\frac{kW}{0.746}")
+
+    hp = st.number_input("HP", value=0.0, key="hp_conv")
+
+    kw_res = st.empty()
+    st.markdown("kW:")
+    kw_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+
+    if st.button("Calcular kW"):
+        kw = hp * 0.746
+        kw_res.markdown(f"<div class='result-box'>{kw:.3f}</div>", unsafe_allow_html=True)
+
+    kw = st.number_input("kW", value=0.0, key="kw_conv")
+
+    hp_res = st.empty()
+    st.markdown("HP:")
+    hp_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+
+    if st.button("Calcular HP"):
+        hp_val = kw / 0.746
+        hp_res.markdown(f"<div class='result-box'>{hp_val:.3f}</div>", unsafe_allow_html=True)
+
+# -------- TAB 2 --------
+with tabs[1]:
+    st.subheader("Potencia")
+
+    if st.checkbox("Ver fórmula", key="chk_pot"):
+        st.latex("HP = \\frac{T \\cdot RPM}{716.2}")
+
+    t = st.number_input("Cupla (kgm)", value=0.0, key="t_pot")
+    rpm = st.number_input("RPM", value=0.0, key="rpm_pot")
+
+    pot_res = st.empty()
+    st.markdown("Potencia (HP):")
+    pot_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+
+    if st.button("Calcular Potencia"):
+        if rpm != 0:
+            hp_calc = (t*rpm)/716.2
+            pot_res.markdown(f"<div class='result-box'>{hp_calc:.3f}</div>", unsafe_allow_html=True)
+
+    if st.button("Ver curva Potencia vs RPM"):
+        if t != 0:
+            rpm_vals = list(range(100, 3001, 100))
+            hp_vals = [(t*r)/716.2 for r in rpm_vals]
+            data = pd.DataFrame({"RPM": rpm_vals, "HP": hp_vals})
+            st.line_chart(data.set_index("RPM"))
+
+# -------- TAB 3 --------
+with tabs[2]:
+    st.subheader("Cupla")
+
+    if st.checkbox("Ver fórmula", key="chk_cupla"):
+        st.latex("T = \\frac{HP \\cdot 716.2}{RPM}")
+
+    hp2 = st.number_input("HP", value=0.0, key="hp_cupla")
+    rpm2 = st.number_input("RPM", value=0.0, key="rpm_cupla")
+
+    cupla_res = st.empty()
+    st.markdown("Cupla (kgm):")
+    cupla_res.markdown("<div class='result-box'>0.000</div>", unsafe_allow_html=True)
+
+    if st.button("Calcular Cupla"):
+        if rpm2 != 0:
+            t_calc = (hp2*716.2)/rpm2
+            cupla_res.markdown(f"<div class='result-box'>{t_calc:.3f}</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        kgm = st.number_input("kgm", value=0.0, key="kgm_conv")
+        if st.button("kgm → Nm"):
+            st.success(f"{kgm * 9.81:.2f} Nm")
+
+    with col2:
+        nm = st.number_input("Nm", value=0.0, key="nm_conv")
+        if st.button("Nm → kgm"):
+            st.success(f"{nm / 9.81:.2f} kgm")
+
 # -------- TAB 4 --------
 with tabs[3]:
     st.subheader("Bobinado")
@@ -83,17 +170,14 @@ with tabs[3]:
                     f"Espiras: {N:.0f}"
                 )
 
-                # -------- SEMAFORO INTELIGENTE --------
-                I_nominal = (P*1000)/(math.sqrt(3)*V*0.85*0.9)
-
-                if I > I_nominal * 1.2:
-                    st.error(f"🔴 Corriente ALTA (>{I_nominal*1.2:.1f} A)")
-                elif I > I_nominal * 1.05:
-                    st.warning(f"🟡 Corriente algo elevada")
+                # -------- SEMAFOROS --------
+                if I > 20:
+                    st.error(f"🔴 Corriente ALTA")
+                elif I > 15:
+                    st.warning(f"🟡 Corriente MEDIA")
                 else:
                     st.success(f"🟢 Corriente NORMAL")
 
-                # FP
                 if fp < 0.75:
                     st.error("🔴 FP bajo")
                 elif fp < 0.85:
@@ -101,7 +185,6 @@ with tabs[3]:
                 else:
                     st.success("🟢 FP bueno")
 
-                # Rendimiento
                 if eta < 0.80:
                     st.error("🔴 Bajo rendimiento")
                 elif eta < 0.88:
@@ -111,11 +194,49 @@ with tabs[3]:
 
     with col2:
         st.markdown("### 📌 Referencias")
+
         st.markdown("""
-FP: 0.9 excelente / 0.85 bueno / 0.8 normal  
-η: 0.90 excelente / 0.85 bueno  
-Densidad: 3–5 A/mm²  
-Frecuencia: 50 Hz AR  
+**Factor de Potencia (FP)**
+- 0.9  → Excelente  
+- 0.85 → Bueno  
+- 0.8  → Normal  
+- 0.7  → Bajo  
+
+**Rendimiento (η)**
+- 0.90 → Excelente  
+- 0.85 → Bueno  
+- 0.80 → Normal  
+- 0.75 → Bajo  
+
+**Densidad de corriente**
+- 3 – 5 A/mm²  
+
+**Frecuencia**
+- 50 Hz → Argentina  
+- 60 Hz → Industrial  
 """)
 
-st.caption("Desarrollado por SED con soporte IA")
+# -------- TAB 5 --------
+with tabs[4]:
+    st.subheader("Ley de Ohm")
+
+    if st.checkbox("Ver fórmula", key="chk_ohm"):
+        st.latex("V = I \\cdot R")
+
+    V = st.number_input("Voltaje", value=0.0, key="v_ohm")
+    I = st.number_input("Intensidad", value=0.0, key="i_ohm")
+    R = st.number_input("Resistencia", value=0.0, key="r_ohm")
+
+    ohm_res = st.empty()
+    st.markdown("Resultado:")
+    ohm_res.markdown("<div class='result-box'>---</div>", unsafe_allow_html=True)
+
+    if st.button("Calcular"):
+        if V == 0:
+            ohm_res.markdown(f"<div class='result-box'>{I*R:.2f} V</div>", unsafe_allow_html=True)
+        elif I == 0:
+            ohm_res.markdown(f"<div class='result-box'>{V/R:.2f} A</div>", unsafe_allow_html=True)
+        elif R == 0:
+            ohm_res.markdown(f"<div class='result-box'>{V/I:.2f} Ω</div>", unsafe_allow_html=True)
+
+st.caption("Desarrollado por SED")

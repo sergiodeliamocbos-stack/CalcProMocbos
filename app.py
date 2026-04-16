@@ -2,6 +2,13 @@ import streamlit as st
 import math
 import pandas as pd
 import numpy as np
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT
+from reportlab.lib.units import cm
+from io import BytesIO
+import os
+from datetime import date
 
 st.set_page_config(page_title="CalcPro Mocbos", layout="centered", page_icon="⚡")
 
@@ -33,15 +40,6 @@ input {
     background-color: #ffffff !important;
     color: #000000 !important;
 }
-
-.result-box {
-    background-color: #000000;
-    color: #00ffcc;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
-    font-size: 18px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -53,7 +51,7 @@ with col2:
 st.markdown("<h2 style='text-align:center;'>CalcPro Mocbos</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;color:gray;'>Planta Mocbos</p>", unsafe_allow_html=True)
 
-tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm"])
+tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm", "Ventas"])
 
 # -------- TAB 1 --------
 with tabs[0]:
@@ -86,9 +84,7 @@ with tabs[1]:
             hp_calc = (t*rpm)/716.2
             st.success(f"{hp_calc:.3f} HP")
 
-            # -------- GRAFICO REAL --------
             st.markdown("### 📈 Curva Potencia vs RPM")
-
             rpm_range = np.linspace(0, rpm*1.5 if rpm > 0 else 1000, 50)
             potencia_curve = (t * rpm_range) / 716.2
 
@@ -149,58 +145,11 @@ with tabs[3]:
                 S = I / 4
                 N = (V / f) * 2
 
-                st.success(
-                    f"Corriente: {I:.2f} A\n"
-                    f"Sección calculada: {S:.2f} mm²\n"
-                    f"Espiras estimadas: {N:.0f}"
-                )
-
-                if fp < 0.75:
-                    st.error("🔴 FP bajo")
-                elif fp < 0.85:
-                    st.warning("🟡 FP medio")
-                else:
-                    st.success("🟢 FP bueno")
-
-                if eta < 0.80:
-                    st.error("🔴 Bajo rendimiento")
-                elif eta < 0.88:
-                    st.warning("🟡 Rendimiento medio")
-                else:
-                    st.success("🟢 Buen rendimiento")
-
-                if S_real > 0:
-                    if S_real < S:
-                        st.error("🔴 Cable chico (riesgo)")
-                    elif S_real < S*1.2:
-                        st.warning("🟡 Cable justo")
-                    else:
-                        st.success("🟢 Cable correcto")
-                else:
-                    st.info("ℹ️ Ingresar sección real para diagnóstico")
+                st.success(f"Corriente: {I:.2f} A\nSección: {S:.2f} mm²\nEspiras: {N:.0f}")
 
     with col2:
         st.markdown("### 📌 Referencias")
-        st.markdown("""
-**Factor de Potencia (FP)**
-- 0.9  → Excelente  
-- 0.85 → Bueno  
-- 0.8  → Normal  
-- 0.7  → Bajo  
-
-**Rendimiento (η)**
-- 0.90 → Excelente  
-- 0.85 → Bueno  
-- 0.80 → Normal  
-- 0.75 → Bajo  
-
-**Densidad de corriente**
-- 3 – 5 A/mm²  
-
-**Frecuencia**
-- 50 Hz → Argentina  
-- 60 Hz → Industrial  
-""")
+        st.markdown("FP: 0.9 excelente / 0.85 bueno / 0.8 normal")
 
 # -------- TAB 5 --------
 with tabs[4]:
@@ -221,4 +170,34 @@ with tabs[4]:
         elif R == 0:
             st.success(f"{V/I:.2f} Ω")
 
+# -------- TAB 6 --------
+with tabs[5]:
+    st.subheader("VENTAS")
+
+    st.info("Herramienta de cálculo y generación de presupuesto")
+
+    nombre_usuario = st.text_input("Nombre y Apellido", key="v_nombre")
+    email_usuario = st.text_input("Email", key="v_email")
+    telefono_usuario = st.text_input("Teléfono", key="v_tel")
+
+    cliente = st.text_input("CLIENTE", key="v_cliente")
+    presupuesto = st.text_input("Presupuesto N°", key="v_pres")
+
+    moneda = st.selectbox("Moneda", ["$", "U$S"], key="v_moneda")
+    importe = st.text_input("IMPORTE", key="v_importe")
+
+    if st.button("Generar PDF", key="v_pdf"):
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer)
+        styles = getSampleStyleSheet()
+
+        contenido = []
+        contenido.append(Paragraph(f"Cliente: {cliente}", styles["Normal"]))
+        contenido.append(Paragraph(f"Presupuesto: {presupuesto}", styles["Normal"]))
+        contenido.append(Paragraph(f"Precio: {moneda} {importe}", styles["Normal"]))
+
+        doc.build(contenido)
+        st.download_button("Descargar PDF", buffer.getvalue(), "presupuesto.pdf")
+
 st.caption("Desarrollado por SED con soporte IA")
+

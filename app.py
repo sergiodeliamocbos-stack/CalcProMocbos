@@ -178,12 +178,15 @@ with tabs[5]:
             contenido.append(Paragraph(f"Precio: {moneda} {importe}", styles["Normal"]))
 
             doc.build(contenido)
-            st.download_button("Descargar PDF", buffer.getvalue(), f"{nombre_archivo}.pdf")
 
-st.caption("Desarrollado por SED")
+            pdf_data = buffer.getvalue()
 
-        st.download_button("Descargar PDF", buffer.getvalue(), "presupuesto.pdf")
+            st.download_button(
+                "Descargar PDF",
+                pdf_data,
+                file_name=f"{nombre_archivo}.pdf",
+                mime="application/pdf"
+            )
 
-st.caption("Desarrollado por SED")
-
+st.caption("Desarrollado por SED con soporte IA")
 

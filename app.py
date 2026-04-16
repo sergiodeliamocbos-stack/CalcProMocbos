@@ -118,75 +118,219 @@ with tabs[4]:
         elif R == 0:
             st.success(f"{V/I:.2f} Ω")
 
-# -------- TAB 6 (COMPLETA) --------
+# -------- TAB 6 (VENTAS ORIGINAL INTEGRADA) --------
 with tabs[5]:
     st.subheader("VENTAS")
 
-    if "resultado" not in st.session_state:
-        st.session_state.resultado = None
-    if "pdf" not in st.session_state:
-        st.session_state.pdf = None
+    # ===== ESTADOS =====
+    if "resultado_v" not in st.session_state:
+        st.session_state.resultado_v = None
+    if "pdf_v" not in st.session_state:
+        st.session_state.pdf_v = None
 
+    # ===== DATOS USUARIO =====
     st.subheader("Datos del usuario")
     nombre_usuario = st.text_input("Nombre y Apellido", key="v_nombre")
     email_usuario = st.text_input("Email", key="v_email")
     telefono_usuario = st.text_input("Teléfono", key="v_tel")
 
+    # ===== DATOS CLIENTE =====
     st.subheader("Datos del cliente / presupuesto")
+
     fecha = st.date_input("FECHA", value=date.today(), key="v_fecha")
-    cliente = st.text_input("CLIENTE", key="v_cliente")
+    cliente = st.text_input("CLIENTE (Nombre o Razón Social)", key="v_cliente")
     email_cliente = st.text_input("EMAIL", key="v_email_cliente")
     telefono = st.text_input("TELÉFONO", key="v_tel_cliente")
-    presupuesto = st.text_input("Presupuesto N°", key="v_pres")
-    referencia = st.text_input("Referencia", key="v_ref")
-    contacto = st.text_input("CONTACTO", key="v_contacto")
+    presupuesto = st.text_input("Presupuesto N°", key="v_presupuesto")
+    referencia = st.text_input("Referencia (N° reparación)", key="v_ref")
+    contacto = st.text_input("CONTACTO (Nombre y Apellido)", key="v_contacto")
 
-    moneda = st.selectbox("Moneda", ["$", "U$S"], key="v_moneda")
-    importe = st.text_input("IMPORTE", key="v_importe")
-    nombre_archivo = st.text_input("Nombre PDF", "reporte_motor", key="v_file")
+    col1, col2 = st.columns(2)
+    with col1:
+        moneda = st.selectbox("Moneda", ["$", "U$S"], key="v_moneda")
+    with col2:
+        importe = st.text_input("IMPORTE", key="v_importe")
 
-    peso = st.number_input("Peso (kg)", key="v_peso")
-    diametro = st.number_input("Diámetro (m)", key="v_diam")
-    rpm_salida = st.number_input("RPM carga", key="v_rpm")
+    nombre_archivo = st.text_input("Nombre del archivo PDF", "reporte_motor", key="v_nombre_archivo")
 
+    # ===== DATOS TECNICOS =====
+    st.subheader("Datos de entrada")
+
+    peso = st.number_input("Peso (kg)", min_value=0.0, key="v_peso")
+    diametro = st.number_input("Diámetro (m)", min_value=0.0, key="v_diam")
+
+    tipo = st.selectbox("Tipo de aplicación", ["Elevación", "Cinta", "Ventilador"], key="v_tipo")
+
+    modo_velocidad = st.radio("¿Cómo definir velocidad?", ["RPM", "Tiempo"], key="v_modo")
+
+    if modo_velocidad == "RPM":
+        rpm_salida = st.number_input("RPM en la carga", min_value=0.0, key="v_rpm")
+    else:
+        distancia = st.number_input("Distancia (m)", min_value=0.0, key="v_dist")
+        tiempo = st.number_input("Tiempo (s)", min_value=0.1, key="v_tiempo")
+
+        if diametro > 0:
+            circ = 3.1416 * diametro
+            vel = distancia / tiempo
+            rpm_salida = (vel / circ) * 60
+        else:
+            rpm_salida = 0
+
+    # ===== REDUCTOR =====
+    tiene_reductor = st.checkbox("Tengo reductor", key="v_reductor")
+
+    if tiene_reductor:
+        relacion_usuario = st.number_input("Relación de reductor", min_value=1.0, value=10.0, key="v_rel")
+    else:
+        relacion_usuario = None
+
+    mostrar_formula = st.checkbox("Mostrar fórmula utilizada", key="v_formula")
+
+    # ===== FUNCION FECHA =====
+    def fecha_texto(f):
+        meses = ["enero","febrero","marzo","abril","mayo","junio",
+                 "julio","agosto","septiembre","octubre","noviembre","diciembre"]
+        return f"Buenos Aires, {f.day} de {meses[f.month-1]}, de {f.year}"
+
+    # ===== CALCULO =====
     if st.button("Calcular", key="v_calc"):
-        if peso and diametro and rpm_salida:
-            radio = diametro/2
-            fuerza = peso*9.81
-            torque = fuerza*radio
-            hp = (torque*rpm_salida)/716.2
-            st.session_state.resultado = {"hp":round(hp),"rpm":rpm_salida,"torque":torque}
 
-    if st.session_state.resultado:
-        r = st.session_state.resultado
+        if peso > 0 and diametro > 0 and rpm_salida > 0:
+
+            radio = diametro / 2
+            fuerza = peso * 9.81
+            torque = fuerza * radio
+
+            if tiene_reductor:
+                rpm_motor = rpm_salida * relacion_usuario
+                relacion = relacion_usuario
+            else:
+                rpm_motor = 1500
+                relacion = rpm_motor / rpm_salida
+
+            hp = (torque * rpm_motor) / 716.2
+
+            st.session_state.resultado_v = {
+                "hp": round(hp),
+                "rpm": rpm_motor,
+                "relacion": relacion,
+                "torque": torque
+            }
+
+    # ===== RESULTADOS =====
+    if st.session_state.resultado_v:
+
+        r = st.session_state.resultado_v
+
         st.success(f"Motor sugerido: {r['hp']} HP")
+        st.info(f"RPM motor: {r['rpm']:.0f}")
+        st.info(f"Relación reductor: {r['relacion']:.2f}")
+        st.info(f"Torque: {r['torque']:.2f} Nm")
 
-        if st.button("Generar PDF", key="v_pdf"):
+        if mostrar_formula:
+            st.markdown("### Fórmulas utilizadas")
+            st.latex(r"T = F \\cdot R")
+            st.latex(r"P = \\frac{T \\cdot RPM}{716.2}")
+
+        # ===== PDF =====
+        if st.button("📄 Generar informe PDF", key="v_pdf"):
+
             buffer = BytesIO()
-            doc = SimpleDocTemplate(buffer)
+
+            doc = SimpleDocTemplate(buffer, leftMargin=1.5*cm, rightMargin=2*cm)
+
             styles = getSampleStyleSheet()
+            style_right = ParagraphStyle(name="Right", parent=styles["Normal"], alignment=TA_RIGHT)
+
             contenido = []
 
+            # LOGO CORREGIDO
             if os.path.exists("logohead.png"):
                 img = Image("logohead.png", width=14*cm)
                 img.hAlign = "CENTER"
                 contenido.append(img)
-                contenido.append(Spacer(1,10))
+                contenido.append(Spacer(1, 10))
 
-            contenido.append(Paragraph(f"Cliente: {cliente}", styles["Normal"]))
+            izquierda = f"""
+<b>Cliente:</b> {cliente}<br/>
+Email: {email_cliente}<br/>
+Tel: {telefono}
+"""
+
+            derecha = f"""
+{fecha_texto(fecha)}<br/>
+Presupuesto N°: {presupuesto}<br/>
+Referencia: {referencia}<br/>
+Contacto: {contacto}
+"""
+
+            contenido.append(Table(
+                [[Paragraph(izquierda, styles["Normal"]),
+                  Paragraph(derecha, style_right)]],
+                colWidths=[10*cm, 6*cm]
+            ))
+
+            contenido.append(Spacer(1, 15))
+
+            contenido.append(Paragraph("De nuestra mayor consideración:", styles["Normal"]))
+            contenido.append(Spacer(1, 10))
+
+            contenido.append(Paragraph(
+                "Según los datos proporcionados y los cálculos realizados, se recomienda lo siguiente:",
+                styles["Normal"]
+            ))
+
+            contenido.append(Spacer(1, 15))
+
             contenido.append(Paragraph(f"Motor: {r['hp']} HP", styles["Normal"]))
-            contenido.append(Paragraph(f"Precio: {moneda} {importe}", styles["Normal"]))
+
+            contenido.append(Spacer(1, 20))
+
+            if importe:
+                contenido.append(Paragraph(
+                    f"<b>Precio Unitario. .................................. {moneda} {importe}</b>",
+                    style_right
+                ))
+
+            contenido.append(Spacer(1, 15))
+
+            nota = """
+NOTA 1: Los precios indicados no incluyen IVA y se entienden en nuestro depósito de Buenos Aires.<br/><br/>
+DATOS BANCARIO:<br/>
+Cta. Cte. en Pesos<br/>
+Bco. Frances<br/>
+N°: 010- 00-7478/9<br/>
+MOTORTECH S.A.<br/>
+CBU 01 700 107 20000000 747893<br/>
+CUIT 30-70733456-4<br/><br/>
+Plazo de entrega: A CONVENIR
+"""
+            contenido.append(Paragraph(nota, styles["Normal"]))
+
+            contenido.append(Spacer(1, 20))
+
+            if nombre_usuario:
+                contenido.append(Paragraph(f"<b>{nombre_usuario}</b>", styles["Normal"]))
+                contenido.append(Paragraph(email_usuario, styles["Normal"]))
+                if telefono_usuario:
+                    contenido.append(Paragraph(f"Tel.Cel: {telefono_usuario}", styles["Normal"]))
+
+            contenido.append(Paragraph("<b>MOTORTECH S.A.</b>", styles["Normal"]))
 
             doc.build(contenido)
 
-            pdf_data = buffer.getvalue()
+            st.session_state.pdf_v = buffer.getvalue()
 
-            st.download_button(
-                "Descargar PDF",
-                pdf_data,
-                file_name=f"{nombre_archivo}.pdf",
-                mime="application/pdf"
-            )
+    # ===== DESCARGA =====
+    if st.session_state.pdf_v:
+        st.download_button(
+            "⬇ Descargar PDF",
+            st.session_state.pdf_v,
+            file_name=f"{nombre_archivo}.pdf",
+            mime="application/pdf",
+            key="v_download"
+        )
 
 st.caption("Desarrollado por SED con soporte IA")
+
 

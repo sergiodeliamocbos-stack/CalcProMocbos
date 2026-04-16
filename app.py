@@ -192,6 +192,14 @@ with tabs[5]:
         styles = getSampleStyleSheet()
 
         contenido = []
+
+        # LOGO CORREGIDO
+        if os.path.exists("logohead.png"):
+            img = Image("logohead.png", width=14*cm)
+            img.hAlign = "CENTER"
+            contenido.append(img)
+            contenido.append(Spacer(1, 10))
+
         contenido.append(Paragraph(f"Cliente: {cliente}", styles["Normal"]))
         contenido.append(Paragraph(f"Presupuesto: {presupuesto}", styles["Normal"]))
         contenido.append(Paragraph(f"Precio: {moneda} {importe}", styles["Normal"]))
@@ -199,5 +207,6 @@ with tabs[5]:
         doc.build(contenido)
         st.download_button("Descargar PDF", buffer.getvalue(), "presupuesto.pdf")
 
-st.caption("Desarrollado por SED con soporte IA")
+st.caption("Desarrollado por SED")
+
 

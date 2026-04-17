@@ -31,7 +31,7 @@ with col2:
 st.markdown("<h2 style='text-align:center;'>CalcPro Mocbos</h2>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;color:gray;'>Planta Mocbos</p>", unsafe_allow_html=True)
 
-tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm", "Ventas"])
+tabs = st.tabs(["Conversión", "Potencia", "Cupla", "Bobinado", "Ohm", "Ventas", "REP"])
 
 # -------- TAB 1 --------
 with tabs[0]:
@@ -229,8 +229,8 @@ with tabs[5]:
 
         if mostrar_formula:
             st.markdown("### Fórmulas utilizadas")
-            st.latex(r"T = F \\cdot R")
-            st.latex(r"P = \\frac{T \\cdot RPM}{716.2}")
+            st.latex(r"T = F \cdot R")
+            st.latex(r"P = \frac{T \cdot RPM}{716.2}")
 
         # ===== PDF =====
         if st.button("📄 Generar informe PDF", key="v_pdf"):
@@ -331,6 +331,140 @@ Plazo de entrega: A CONVENIR
             key="v_download"
         )
 
+# -------- TAB 7 (REP) --------
+with tabs[6]:
+    st.subheader("REPARACIONES")
+
+    # ===== CONFIG =====
+    moneda_rep = st.selectbox("Moneda", ["Pesos ($)", "Dólares (u$s)"], key="rep_moneda")
+    simbolo = "$" if "Pesos" in moneda_rep else "u$s"
+
+    # ===== USUARIO =====
+    st.subheader("Datos del usuario")
+    nombre_usuario_rep = st.text_input("Nombre y Apellido", key="rep_nombre")
+    telefono_usuario_rep = st.text_input("Teléfono", key="rep_tel")
+    email_usuario_rep = st.text_input("Email", key="rep_email")
+
+    # ===== CLIENTE =====
+    st.subheader("Datos del cliente")
+    cliente_rep = st.text_input("Cliente", key="rep_cliente")
+    contacto_rep = st.text_input("CONTACTO", key="rep_contacto")
+    telefono_cliente_rep = st.text_input("Teléfono cliente", key="rep_tel_cliente")
+    email_cliente_rep = st.text_input("Email cliente", key="rep_email_cliente")
+
+    # ===== PRESUPUESTO =====
+    st.subheader("Datos del presupuesto")
+    numero_presupuesto = st.text_input("Presupuesto N°", "0001", key="rep_pres")
+    referencia_rep = st.text_input("Referencia", key="rep_ref")
+
+    # ===== DATOS TECNICOS =====
+    st.subheader("Datos del equipo")
+    modelo = st.text_input("Modelo", key="rep_modelo")
+    potencia = st.number_input("Potencia", min_value=0.0, key="rep_pot")
+    unidad_potencia = st.selectbox("Unidad de potencia", ["kW", "HP"], key="rep_unidad")
+    velocidad = st.number_input("Velocidad (RPM)", min_value=0.0, key="rep_rpm")
+    t_inducido = st.number_input("T. Inducido (V)", min_value=0.0, key="rep_ti")
+    t_alimentacion = st.number_input("T. Alimentación (V)", min_value=0.0, key="rep_ta")
+    forma = st.text_input("Forma Constructiva", key="rep_forma")
+    proteccion = st.text_input("Protección Mecánica", key="rep_prot")
+    aislacion = st.text_input("Aislación", key="rep_aisl")
+    accesorios = st.text_input("Accesorios", key="rep_acc")
+    numero = st.text_input("Número", key="rep_num")
+    cantidad = st.number_input("Cantidad", min_value=1, value=1, key="rep_cant")
+    faltantes = st.text_input("Faltantes", key="rep_falt")
+
+    # ===== TEXTO AUTOMATICO =====
+    partes = [f"{int(cantidad)} Motor"]
+    if modelo: partes.append(modelo)
+    if potencia: partes.append(f"{potencia} {unidad_potencia}")
+    if velocidad: partes.append(f"{velocidad} RPM")
+    if t_inducido: partes.append(f"{t_inducido} V")
+    if t_alimentacion: partes.append(f"{t_alimentacion} V")
+    if forma: partes.append(forma)
+    if proteccion: partes.append(proteccion)
+    if numero: partes.append(f"N° {numero}")
+
+    texto_equipo = "Reparación " + ", ".join(partes)
+
+    # ===== TAREAS =====
+    st.subheader("TAREAS A REALIZAR")
+    tareas = st.multiselect("Seleccionar tareas", [
+        "Mantenimiento","Bobinado Rotor","Bobinado Estator","Bobinado Completo",
+        "Mantenimiento Ventilación","Mantenimiento DT","Escobillas","Portaescobillas",
+        "Colector","Conos de Mica","Cambio de eje"
+    ], key="rep_tareas")
+
+    precios_tareas = {}
+    total_tareas = 0
+
+    for t in tareas:
+        precio = st.number_input(f"Precio - {t}", min_value=0.0, key=f"rep_t_{t}")
+        precios_tareas[t] = precio
+        total_tareas += precio
+
+    # ===== TAREAS MANUALES =====
+    st.markdown("### Tareas manuales")
+    if "tareas_manuales_rep" not in st.session_state:
+        st.session_state.tareas_manuales_rep = []
+
+    if st.button("➕ Agregar tarea manual", key="rep_add"):
+        st.session_state.tareas_manuales_rep.append("")
+
+    for i in range(len(st.session_state.tareas_manuales_rep)):
+        texto = st.text_input(f"Tarea manual {i+1}", key=f"rep_tm_{i}")
+        precio = st.number_input(f"Precio tarea manual {i+1}", min_value=0.0, key=f"rep_tm_p_{i}")
+        if texto:
+            precios_tareas[texto] = precio
+            total_tareas += precio
+
+    # ===== REPUESTOS =====
+    st.subheader("ELEMENTOS A REEMPLAZAR")
+    repuestos = st.multiselect("Seleccionar elementos", [
+        "Rodamientos","Escobillas","Portaescobillas","Resortes Escobillas",
+        "Colector","Bornera","Ventilador","Terminales","Ferreteria","Varios"
+    ], key="rep_repuestos")
+
+    total_repuestos = 0
+    for r in repuestos:
+        precio = st.number_input(f"Precio - {r}", min_value=0.0, key=f"rep_r_{r}")
+        total_repuestos += precio
+
+    total_final = total_tareas + total_repuestos
+
+    st.subheader("TOTAL")
+    st.success(f"Total presupuesto: {simbolo} {total_final:,.2f}")
+
+    # ===== PDF =====
+    if st.button("📄 Generar PDF", key="rep_pdf"):
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(buffer)
+        styles = getSampleStyleSheet()
+        estilo_derecha = ParagraphStyle(name="derecha", parent=styles["Normal"], alignment=TA_RIGHT)
+
+        contenido = []
+
+        if os.path.exists("logohead.png"):
+            contenido.append(Image("logohead.png", width=450, height=120))
+            contenido.append(Spacer(1, 10))
+
+        fecha = datetime.now()
+        meses = ["enero","febrero","marzo","abril","mayo","junio",
+                 "julio","agosto","septiembre","octubre","noviembre","diciembre"]
+
+        fecha_texto = f"Buenos Aires, {fecha.day} de {meses[fecha.month-1]} de {fecha.year}"
+        contenido.append(Paragraph(fecha_texto, estilo_derecha))
+
+        contenido.append(Paragraph(f"Cliente: {cliente_rep}", styles["Normal"]))
+        contenido.append(Paragraph(texto_equipo, styles["Normal"]))
+
+        contenido.append(Paragraph(f"TOTAL: {simbolo} {total_final:,.2f}", styles["Heading2"]))
+
+        doc.build(contenido)
+
+        st.download_button("⬇ Descargar PDF", buffer.getvalue(), "reparacion.pdf", key="rep_dl")
+
 st.caption("Desarrollado por SED con soporte IA")
+
 
 

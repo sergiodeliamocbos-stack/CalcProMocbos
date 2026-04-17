@@ -8,7 +8,7 @@ from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.units import cm
 from io import BytesIO
 import os
-from datetime import date
+from datetime import date, datetime
 
 st.set_page_config(page_title="CalcPro Mocbos", layout="centered", page_icon="⚡")
 
@@ -465,6 +465,7 @@ with tabs[6]:
         st.download_button("⬇ Descargar PDF", buffer.getvalue(), "reparacion.pdf", key="rep_dl")
 
 st.caption("Desarrollado por SED con soporte IA")
+
 
 
 

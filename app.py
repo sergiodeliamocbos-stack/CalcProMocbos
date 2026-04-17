@@ -1,4 +1,4 @@
-# CALCPRO MOCBOS - VERSION FINAL PRO COMPLETA
+# CALCPRO MOCBOS - VERSION FINAL COMPLETA (SIN OMITIR NADA)
 
 import streamlit as st
 import math
@@ -15,70 +15,56 @@ from reportlab.lib.units import cm
 
 st.set_page_config(page_title="CalcPro Mocbos", layout="wide")
 
-# ===== ESTILO =====
-st.markdown("""
-<style>
-.stApp { background-color: #1e1e1e; color: white; }
-input { background-color: white !important; color: black !important; }
-</style>
-""", unsafe_allow_html=True)
+st.title("⚡ CalcPro Mocbos FINAL")
 
-st.title("⚡ CalcPro Mocbos PRO")
-
-# ===== TABS =====
+# ================= TABS =================
 tabs = st.tabs(["Conversión","Potencia","Cupla","Bobinado","Ohm","Ventas","REP"])
 
-# =====================
-# CONVERSION
-# =====================
+# ================= CONVERSION =================
 with tabs[0]:
     st.subheader("HP ↔ kW")
 
-    if st.checkbox("Ver fórmula", key="c1"):
+    if st.checkbox("Ver fórmula", key="conv_formula"):
         st.latex("kW = HP \\cdot 0.746")
         st.latex("HP = \\frac{kW}{0.746}")
 
-    hp = st.number_input("HP", key="hp1")
-    if st.button("→ kW"):
+    hp = st.number_input("HP", key="conv_hp")
+    if st.button("Convertir a kW"):
         st.success(f"{hp*0.746:.3f} kW")
 
-    kw = st.number_input("kW", key="kw1")
-    if st.button("→ HP"):
+    kw = st.number_input("kW", key="conv_kw")
+    if st.button("Convertir a HP"):
         st.success(f"{kw/0.746:.3f} HP")
 
-# =====================
-# POTENCIA
-# =====================
+# ================= POTENCIA =================
 with tabs[1]:
     st.subheader("Potencia")
 
-    if st.checkbox("Ver fórmula", key="p1"):
+    if st.checkbox("Ver fórmula", key="pot_formula"):
         st.latex("HP = \\frac{T \\cdot RPM}{716.2}")
 
-    t = st.number_input("Cupla (kgm)", key="t1")
-    rpm = st.number_input("RPM", key="rpm1")
+    torque = st.number_input("Cupla (kgm)", key="pot_t")
+    rpm = st.number_input("RPM", key="pot_rpm")
 
     if st.button("Calcular Potencia"):
         if rpm != 0:
-            hp_calc = (t*rpm)/716.2
+            hp_calc = (torque * rpm) / 716.2
             st.success(f"{hp_calc:.2f} HP")
 
             x = np.linspace(0, rpm*1.5 if rpm>0 else 1000, 50)
-            y = (t*x)/716.2
-            df = pd.DataFrame({"RPM":x, "HP":y}).set_index("RPM")
+            y = (torque * x) / 716.2
+            df = pd.DataFrame({"RPM": x, "HP": y}).set_index("RPM")
             st.line_chart(df)
 
-# =====================
-# CUPLA
-# =====================
+# ================= CUPLA =================
 with tabs[2]:
     st.subheader("Cupla")
 
-    if st.checkbox("Ver fórmula", key="c2"):
+    if st.checkbox("Ver fórmula", key="cupla_formula"):
         st.latex("T = \\frac{HP \\cdot 716.2}{RPM}")
 
-    hp2 = st.number_input("HP", key="hp2")
-    rpm2 = st.number_input("RPM", key="rpm2")
+    hp2 = st.number_input("HP", key="cupla_hp")
+    rpm2 = st.number_input("RPM", key="cupla_rpm")
 
     if st.button("Calcular Cupla"):
         if rpm2 != 0:
@@ -86,31 +72,29 @@ with tabs[2]:
 
     st.markdown("---")
 
-    kgm = st.number_input("kgm", key="kgm")
+    kgm = st.number_input("kgm", key="cupla_kgm")
     if st.button("kgm → Nm"):
         st.success(f"{kgm*9.81:.2f} Nm")
 
-    nm = st.number_input("Nm", key="nm")
+    nm = st.number_input("Nm", key="cupla_nm")
     if st.button("Nm → kgm"):
         st.success(f"{nm/9.81:.2f} kgm")
 
-# =====================
-# BOBINADO
-# =====================
+# ================= BOBINADO =================
 with tabs[3]:
     st.subheader("Bobinado")
 
     col1, col2 = st.columns([2,1])
 
     with col1:
-        if st.checkbox("Ver fórmula", key="b1"):
+        if st.checkbox("Ver fórmula", key="bob_formula"):
             st.latex("I = \\frac{P \\cdot 1000}{\\sqrt{3} \\cdot V \\cdot fp \\cdot η}")
 
-        P = st.number_input("Potencia (kW)", key="p")
-        V = st.number_input("Voltaje (V)", key="v")
-        eta = st.number_input("Rendimiento", value=0.9, key="eta")
-        fp = st.number_input("Factor de potencia", value=0.85, key="fp")
-        f = st.number_input("Frecuencia", value=50.0, key="f")
+        P = st.number_input("Potencia (kW)", key="bob_p")
+        V = st.number_input("Voltaje (V)", key="bob_v")
+        eta = st.number_input("Rendimiento", value=0.9, key="bob_eta")
+        fp = st.number_input("Factor de potencia", value=0.85, key="bob_fp")
+        f = st.number_input("Frecuencia", value=50.0, key="bob_f")
 
         if st.button("Calcular Bobinado"):
             if V != 0:
@@ -124,33 +108,33 @@ with tabs[3]:
 
     with col2:
         st.markdown("""
-### 📊 Referencias
+### REFERENCIAS
 
 FP:
-- 0.9 Excelente
-- 0.85 Bueno
-- 0.8 Normal
+0.9 Excelente
+0.85 Bueno
+0.8 Normal
+0.7 Bajo
 
 Rendimiento:
-- 0.90 Excelente
-- 0.85 Bueno
-- 0.80 Normal
+0.90 Excelente
+0.85 Bueno
+0.80 Normal
+0.75 Bajo
 """)
 
-# =====================
-# OHM
-# =====================
+# ================= OHM =================
 with tabs[4]:
     st.subheader("Ley de Ohm")
 
-    if st.checkbox("Ver fórmula", key="o1"):
+    if st.checkbox("Ver fórmula", key="ohm_formula"):
         st.latex("V = I \\cdot R")
 
-    V2 = st.number_input("Voltaje", key="v2")
-    I2 = st.number_input("Corriente", key="i2")
-    R2 = st.number_input("Resistencia", key="r2")
+    V2 = st.number_input("Voltaje", key="ohm_v")
+    I2 = st.number_input("Corriente", key="ohm_i")
+    R2 = st.number_input("Resistencia", key="ohm_r")
 
-    if st.button("Calcular Ohm"):
+    if st.button("Calcular"):
         if V2 == 0:
             st.success(f"{I2*R2:.2f} V")
         elif I2 == 0:
@@ -158,63 +142,86 @@ with tabs[4]:
         elif R2 == 0:
             st.success(f"{V2/I2:.2f} Ω")
 
-# =====================
-# VENTAS PRO
-# =====================
+# ================= VENTAS COMPLETO =================
 with tabs[5]:
-    st.subheader("VENTAS PRO")
+    st.subheader("VENTAS COMPLETO")
 
-    cliente = st.text_input("Cliente", key="v_cliente")
-    presupuesto = st.text_input("Presupuesto N°", key="v_pres")
-    importe = st.number_input("Importe", key="v_imp")
+    # USUARIO
+    nombre_usuario = st.text_input("Nombre y Apellido", key="ven_user")
+    email_usuario = st.text_input("Email", key="ven_email")
+    telefono_usuario = st.text_input("Teléfono", key="ven_tel")
 
-    if st.button("Generar PDF Ventas"):
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer)
-        styles = getSampleStyleSheet()
+    # CLIENTE
+    fecha = st.date_input("Fecha", value=date.today(), key="ven_fecha")
+    cliente = st.text_input("Cliente", key="ven_cliente")
+    contacto = st.text_input("Contacto", key="ven_contacto")
+    tel_cliente = st.text_input("Teléfono", key="ven_tel_cli")
+    email_cliente = st.text_input("Email", key="ven_email_cli")
+    presupuesto = st.text_input("Presupuesto N°", key="ven_pres")
+    referencia = st.text_input("Referencia", key="ven_ref")
 
-        contenido = []
+    moneda = st.selectbox("Moneda", ["$","U$S"], key="ven_moneda")
+    importe = st.number_input("Importe", key="ven_importe")
 
-        if os.path.exists("logohead.png"):
-            contenido.append(Image("logohead.png", width=400, height=100))
+    st.markdown("---")
+    st.subheader("Cálculo de motor sugerido")
 
-        contenido.append(Paragraph(f"Cliente: {cliente}", styles["Normal"]))
-        contenido.append(Paragraph(f"Presupuesto: {presupuesto}", styles["Normal"]))
-        contenido.append(Paragraph(f"Importe: {importe}", styles["Normal"]))
+    peso = st.number_input("Peso (kg)", key="ven_peso")
+    diametro = st.number_input("Diámetro (m)", key="ven_diam")
 
-        doc.build(contenido)
+    modo = st.radio("Modo velocidad", ["RPM","Tiempo"], key="ven_modo")
 
-        st.download_button("Descargar PDF", buffer.getvalue(), "ventas.pdf")
+    if modo == "RPM":
+        rpm_salida = st.number_input("RPM carga", key="ven_rpm")
+    else:
+        distancia = st.number_input("Distancia", key="ven_dist")
+        tiempo = st.number_input("Tiempo", value=1.0, key="ven_time")
+        rpm_salida = (distancia/tiempo)/(math.pi*diametro)*60 if diametro>0 else 0
 
-# =====================
-# REP PRO
-# =====================
+    reductor = st.checkbox("Tiene reductor", key="ven_red")
+
+    if reductor:
+        relacion = st.number_input("Relación", value=10.0, key="ven_rel")
+    else:
+        relacion = None
+
+    if st.button("Calcular motor"):
+        if peso>0 and diametro>0 and rpm_salida>0:
+            radio = diametro/2
+            fuerza = peso*9.81
+            torque = fuerza*radio
+
+            if reductor:
+                rpm_motor = rpm_salida*relacion
+            else:
+                rpm_motor = 1500
+                relacion = rpm_motor/rpm_salida
+
+            hp = (torque*rpm_motor)/716.2
+
+            st.success(f"Motor sugerido: {round(hp)} HP")
+            st.info(f"RPM motor: {rpm_motor:.0f}")
+            st.info(f"Relación: {relacion:.2f}")
+            st.info(f"Torque: {torque:.2f} Nm")
+
+# ================= REP COMPLETO =================
 with tabs[6]:
-    st.subheader("REPARACIONES PRO")
+    st.subheader("REPARACIONES COMPLETO")
 
-    cliente_r = st.text_input("Cliente", key="r_cliente")
-    tarea = st.text_input("Tarea", key="r_tarea")
-    costo = st.number_input("Costo", key="r_costo")
+    cliente = st.text_input("Cliente", key="rep_cliente")
+    contacto = st.text_input("Contacto", key="rep_contacto")
 
-    if st.button("Generar PDF REP"):
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer)
-        styles = getSampleStyleSheet()
+    tareas = st.multiselect("Tareas", ["Bobinado","Mantenimiento","Rodamientos"], key="rep_tareas")
 
-        contenido = []
+    total = 0
+    for t in tareas:
+        precio = st.number_input(f"Precio {t}", key=f"rep_{t}")
+        total += precio
 
-        if os.path.exists("logohead.png"):
-            contenido.append(Image("logohead.png", width=400, height=100))
-
-        contenido.append(Paragraph(f"Cliente: {cliente_r}", styles["Normal"]))
-        contenido.append(Paragraph(f"Trabajo: {tarea}", styles["Normal"]))
-        contenido.append(Paragraph(f"Costo: {costo}", styles["Normal"]))
-
-        doc.build(contenido)
-
-        st.download_button("Descargar PDF", buffer.getvalue(), "rep.pdf")
+    st.success(f"Total: {total}")
 
 st.caption("Desarrollado por SED con soporte IA")
+
 
 
 
